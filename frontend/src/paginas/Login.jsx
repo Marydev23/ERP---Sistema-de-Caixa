@@ -1,13 +1,13 @@
 import { FaUser, FaLock } from "react-icons/fa";
 import "../style.css";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // ← IMPORT AQUI
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
 
-  const navigate = useNavigate(); // ← INSTANCIA
+  const navigate = useNavigate();
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -73,14 +73,14 @@ const Login = () => {
             <input type="checkbox" />
             Lembre de mim
           </label>
-          <a href="#">Esqueceu a senha?</a>
+          <a href="#s">Esqueceu a senha?</a>
         </div>
 
         <button type="submit">Entrar</button>
 
         <div className="signup-link">
           <p>
-            Não tem uma conta? <a href="#">Registrar</a>
+            Não tem uma conta? <a href="/usuario">Registrar</a>
           </p>
         </div>
       </form>

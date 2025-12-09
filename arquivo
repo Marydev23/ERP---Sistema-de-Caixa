@@ -13,3 +13,10 @@ npm run dev
  rafce atalho react
 
 rfce
+
+
+github 
+
+git add . 
+git commit -m "mensagem do que você mudou"
+git push
