@@ -9,7 +9,6 @@ function Relatorio() {
     <main className="flex-1 bg-white border rounded-lg p-8">
       <h1 className="text-3xl font-semibold mb-6">Relatório</h1>
 
-      {/* Filtro de data */}
       <div className="mb-6">
         <h2 className="text-lg font-semibold mb-3">Período</h2>
 
@@ -36,7 +35,6 @@ function Relatorio() {
         </div>
       </div>
 
-      {/* Botão Gerar */}
       <button
         onClick={() => {
           console.log("Data inicial:", dataInicio);
