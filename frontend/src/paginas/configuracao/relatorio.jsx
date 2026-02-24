@@ -3,7 +3,6 @@ import React, { useState } from "react";
 function Relatorio() {
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
-  const [tipo, setTipo] = useState("gerar");
 
   return (
     <main className="flex-1 bg-white border rounded-lg p-8">

@@ -1,263 +1,339 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Edit2, SquarePen, Trash2 } from "lucide-react";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../components/ui/tooltip";
 
 function Funcionarios() {
-  const [descricao, setDescricao] = useState("");
+  const [nome, setNome] = useState("");
   const [cargo, setCargo] = useState("");
   const [endereco, setEndereco] = useState("");
-  const [Contato, setContato] = useState("");
+  const [telefone, setTelefone] = useState("");
   const [data, setData] = useState("");
-  const [valor, setValor] = useState("");
+  const [valorSalario, setValorSalario] = useState("");
   const [status, setStatus] = useState("ATIVO");
 
   const [listaFuncionario, setListaFuncionario] = useState([]);
+  const [editandoId, setEditandoId] = useState(null);
+  const [modalAberto, setModalAberto] = useState(false);
 
-  function salvarFuncionario(e) {
+  // ===============================
+  // BUSCAR FUNCIONÁRIOS
+  // ===============================
+  async function buscarFuncionarios() {
+    const response = await fetch("http://localhost:5000/funcionarios");
+    const dados = await response.json();
+    setListaFuncionario(dados);
+  }
+
+  useEffect(() => {
+    buscarFuncionarios();
+  }, []);
+
+  // ===============================
+  // SALVAR / ATUALIZAR
+  // ===============================
+  async function salvarFuncionario(e) {
     e.preventDefault();
 
-    if (!descricao || !Contato || !data) {
-      alert("Preencha todos os campos obrigatórios");
+    if (!nome || !cargo || !telefone || !endereco || !valorSalario) {
+      alert("Preencha todos os campos");
       return;
     }
 
-    const novoFuncionario = {
-      id: Date.now(),
-      descricao,
-      cargo,
-      endereco,
-      Contato,
-      data,
-      valor,
-      status, // ✅ agora usa o status do formulário
+    const payload = {
+      Nome: nome,
+      Cargo: cargo,
+      Telefone: telefone,
+      Endereco: endereco,
+      Valor_salario: Number(valorSalario),
+      Data_admissao: data,
+      Status: status,
     };
 
-    setListaFuncionario([...listaFuncionario, novoFuncionario]);
+    const url = editandoId
+      ? `http://localhost:5000/funcionarios/${editandoId}`
+      : "http://localhost:5000/funcionarios";
 
-    setDescricao("");
+    const method = editandoId ? "PUT" : "POST";
+
+    const response = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      alert(result.erro || "Erro ao salvar");
+      return;
+    }
+
+    alert(result.mensagem);
+    limparFormulario();
+    buscarFuncionarios();
+    setModalAberto(false);
+  }
+
+  // ===============================
+  // EDITAR
+  // ===============================
+  function editarFuncionario(f) {
+    setEditandoId(f.ID);
+    setNome(f.Nome);
+    setCargo(f.Cargo);
+    setTelefone(f.Telefone);
+    setEndereco(f.Endereco);
+    setValorSalario(f.Valor_salario);
+    setData(f.Data_admissao || "");
+    setStatus(f.Status);
+    setModalAberto(true);
+  }
+
+  function limparFormulario() {
+    setEditandoId(null);
+    setNome("");
     setCargo("");
+    setTelefone("");
     setEndereco("");
-    setContato("");
-    setValor("");
+    setValorSalario("");
     setData("");
-    setStatus("ATIVO"); // ✅ volta para ATIVO ao limpar
+    setStatus("ATIVO");
+  }
+
+  // ===============================
+  // EXCLUIR
+  // ===============================
+  async function excluirFuncionario(id) {
+    if (!window.confirm("Deseja excluir este funcionário?")) return;
+
+    const response = await fetch(`http://localhost:5000/funcionarios/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      alert("Erro ao excluir funcionário");
+      return;
+    }
+
+    buscarFuncionarios();
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <Card className="w-full h-screen">
-        <CardContent className="w-full h-full flex flex-col justify-start space-y-8">
-          <form
-            onSubmit={salvarFuncionario}
-            className="w-full max-w-4xl bg-white p-8 rounded-2xl shadow-lg space-y-6"
+    <div className="max-w-6xl mx-auto p-6">
+      {/* TOPO */}
+      <div className="flex justify-between mb-6">
+        <h1 className="text-4xl font-bold text-gray-950">
+          Cadastro de Funcionários
+        </h1>
+
+        <div className="flex items-start">
+          <button
+            onClick={() => {
+              limparFormulario();
+              setModalAberto(true);
+            }}
+            className="
+          inline-flex
+          items-center
+          bg-gray-900 
+          hover:bg-gray-800
+          text-white
+          text-sm
+          h-9
+          px-8
+          rounded-md
+          leading-none
+        "
           >
-            <h2 className="text-[25px] font-bold text-gray-800 border-b pb-4">
-              Cadastro de Funcionários
-            </h2>
+            Adicionar
+          </button>
+        </div>
+      </div>
 
-            {/* Nome Completo */}
-            <div className="grid grid-cols-12 items-center gap-4">
-              <label className="col-span-3 text-sm font-semibold text-gray-700">
-                Nome Completo:
-              </label>
+      {/* TABELA */}
+      <Card className="rounded-xl shadow-sm">
+        <CardContent className="p-0">
+          <table className="w-full ">
+            <thead>
+              <tr className="bg-gray-400 text-gray-800">
+                <th className="px-4 py-3 text-left font-semibold">Nome</th>
+                <th className="px-4 py-3 text-left font-semibold">Função</th>
+                <th className="px-4 py-3 text-left font-semibold">Salário</th>
+                <th className="px-4 py-3 text-left font-semibold">Status</th>
+                <th className="px-4 py-3 text-center font-semibold">Editar</th>
+                <th className="px-4 py-3 text-center font-semibold">Excluir</th>
+              </tr>
+            </thead>
 
-              <input
-                className="col-span-9 border border-gray-300 rounded-xl px-4 py-3 text-sm 
-                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                 placeholder-gray-400"
-                value={descricao}
-                onChange={(e) => setDescricao(e.target.value)}
-                placeholder="Digite o nome do funcionário"
-              />
-            </div>
+            <tbody>
+              {listaFuncionario.map((f) => (
+                <tr key={f.ID} className="border-b hover:bg-gray-50 transition">
+                  <td className="px-4 py-3">{f.Nome}</td>
+                  <td className="px-4 py-3">{f.Cargo}</td>
+                  <td className="px-4 py-3">
+                    R${" "}
+                    {Number(f.Valor_salario).toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </td>
 
-            {/* Cargo */}
-            <div className="grid grid-cols-12 items-center gap-4">
-              <label className="col-span-3 text-sm font-semibold text-gray-700">
-                Cargo:
-              </label>
+                  <td className="px-4 py-3">{f.Status}</td>
 
-              <input
-                className="col-span-9 border border-gray-300 rounded-xl px-4 py-3 text-sm 
-                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                 placeholder-gray-400"
-                value={cargo}
-                onChange={(e) => setCargo(e.target.value)}
-                placeholder="Digite o cargo"
-              />
-            </div>
+                  {/* EDITAR */}
+                  <td className="px-4 py-3 text-center align-middle">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => editarFuncionario(f)}
+                            className="
+            inline-flex
+            items-center
+            justify-center
+            p-1
+            bg-transparent
+            border-none
+            text-gray-900
+            hover:text-gray-900
+            focus:outline-none
+          "
+                            aria-label="Editar"
+                          >
+                            <SquarePen size={16} />
+                          </button>
+                        </TooltipTrigger>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </td>
 
-            <div className="grid grid-cols-12 items-center gap-4">
-              <label className="col-span-3 text-sm font-semibold text-gray-700">
-                Endereço:
-              </label>
+                  {/* EXCLUIR */}
+                  <td className="px-4 py-3 text-center align-middle">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => excluirFuncionario(f.ID)}
+                            className="
+                              inline-flex
+            items-center
+            justify-center
+            p-1
+            bg-transparent
+            border-none
+            text-gray-900
+            hover:text-gray-900
+            focus:outline-none
+          "
+                            aria-label="Excluir"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Excluir</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </td>
+                </tr>
+              ))}
 
-              <input
-                className="col-span-9 border border-gray-300 rounded-xl px-4 py-3 text-sm 
-                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                 placeholder-gray-400"
-                value={endereco}
-                onChange={(e) => setEndereco(e.target.value)}
-                placeholder="Digite o endereço"
-              />
-            </div>
-
-            <div className="grid grid-cols-12 items-center gap-4">
-              <label className="col-span-3 text-sm font-semibold text-gray-700">
-                Contato:
-              </label>
-
-              <input
-                className="col-span-9 border border-gray-300 rounded-xl px-4 py-3 text-sm 
-                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                 placeholder-gray-400"
-                value={Contato}
-                onChange={(e) => setContato(e.target.value)}
-                placeholder="Digite o contato"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium">Data Admissão</label>
-                <input
-                  type="date"
-                  className="w-full border rounded-md p-2"
-                  value={data}
-                  onChange={(e) => setData(e.target.value)}
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium">Valor do Salário</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="0,00"
-                  className="w-full border rounded-md p-2 text-base"
-                  value={valor}
-                  onChange={(e) => setValor(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* ✅ STATUS (ADICIONADO) */}
-            <div className="grid grid-cols-12 items-center gap-4">
-              <label className="col-span-3 text-sm font-semibold text-gray-700">
-                Status:
-              </label>
-
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="col-span-9 border border-gray-300 rounded-xl px-4 py-3 text-sm
-                focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="ATIVO">Ativo</option>
-                <option value="INATIVO">Inativo</option>
-              </select>
-            </div>
-
-            {/* Botões */}
-            <div className="flex justify-end gap-4 pt-6">
-              <button
-                type="button"
-                onClick={() => {
-                  setDescricao("");
-                  setCargo("");
-                  setEndereco("");
-                  setContato("");
-                  setValor("");
-                  setData("");
-                  setStatus("ATIVO");
-                }}
-                className="w-20 h-7 px-2 py-0 text-xs bg-blue-600 text-white font-semibold
-                hover:bg-blue-700 transition shadow-md"
-              >
-                Cancelar
-              </button>
-
-              <button
-                type="submit"
-                className=" w-20 h-7 px-2 py-0 text-xs bg-blue-600 text-white font-semibold
-                 hover:bg-blue-700 transition shadow-md"
-              >
-                Salvar
-              </button>
-            </div>
-          </form>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-[25px] font-bold text-gray-800 border-b pb-4">
-                Lista de Funcionários
-              </CardTitle>
-            </CardHeader>
-
-            <CardContent className="overflow-x-auto">
-              <table className="w-full border">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="border p-2">Nome</th>
-                    <th className="border p-2">Cargo</th>
-                    <th className="border p-2">Endereço</th>
-                    <th className="border p-2">Contato</th>
-                    <th className="border p-2">Data de Admissão</th>
-                    <th className="border p-2">Valor Salário</th>
-                    <th className="border p-2">Status</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {listaFuncionario.length === 0 && (
-                    <tr>
-                      <td colSpan="7" className="text-center p-4">
-                        Nenhum funcionário cadastrado
-                      </td>
-                    </tr>
-                  )}
-
-                  {listaFuncionario.map((f) => (
-                    <tr key={f.id}>
-                      <td className="border p-2">{f.descricao}</td>
-                      <td className="border p-2">{f.cargo}</td>
-                      <td className="border p-2">{f.endereco}</td>
-                      <td className="border p-2">{f.Contato}</td>
-                      <td className="border p-2">{f.data}</td>
-                      <td className="border p-2">{f.valor}</td>
-                      <td className="border p-2">{f.status}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <CardContent>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    type="button"
-                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 w-20 h-7 px-2 py-0 text-xs"
-                  >
-                    Excluir
-                  </Button>
-
-                  <Button
-                    type="button"
-                    className="bg-gray-400 hover:bg-gray-500 text-white w-20 h-7 px-2 py-0 text-xs"
-                  >
-                    Editar
-                  </Button>
-
-                  <Button
-                    type="submit"
-                    className="bg-gray-600 hover:bg-gray-700 text-white w-20 h-7 px-2 py-0 text-xs"
-                  >
-                    Salvar
-                  </Button>
-                </div>
-              </CardContent>
-            </CardContent>
-          </Card>
+              {listaFuncionario.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="text-center py-16 text-gray-400">
+                    Nenhum funcionário cadastrado
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </CardContent>
       </Card>
+
+      {/* MODAL */}
+      {modalAberto && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center ">
+          <form
+            onSubmit={salvarFuncionario}
+            className="space-y-5 bg-gray-100 w-full max-w-2xl p-8 rounded-lg shadow-lg"
+          >
+            <CardTitle className="font-bold py-1">
+              {editandoId ? "Editar Funcionário" : "Novo Funcionário"}
+            </CardTitle>
+
+            <input
+              className="w-full bg-transparent border-0 border-b border-gray-500 focus:outline-none"
+              placeholder="Nome"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+            />
+
+            <input
+              className="w-full bg-transparent  border-0 border-b border-gray-500 focus:outline-none"
+              placeholder="Cargo"
+              value={cargo}
+              onChange={(e) => setCargo(e.target.value)}
+            />
+            <input
+              className="w-full bg-transparent  border-0 border-b border-gray-500 focus:outline-none"
+              placeholder="Endereço"
+              value={endereco}
+              onChange={(e) => setEndereco(e.target.value)}
+            />
+            <input
+              className="w-full bg-transparent  border-0 border-b border-gray-500 focus:outline-none"
+              placeholder="Telefone"
+              value={telefone}
+              onChange={(e) => setTelefone(e.target.value)}
+            />
+            <input
+              className="w-full bg-transparent  border-0 border-b border-gray-500 focus:outline-none"
+              type="date"
+              value={data}
+              onChange={(e) => setData(e.target.value)}
+            />
+            <input
+              className="w-full bg-transparent  border-0 border-b border-gray-500 focus:outline-none"
+              type="number"
+              placeholder="Salário"
+              value={valorSalario}
+              onChange={(e) => setValorSalario(e.target.value)}
+            />
+
+            <select
+              className="w-full bg-transparent  border-0 border-b border-gray-500 focus:outline-none"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+            >
+              <option value="ATIVO">Ativo</option>
+              <option value="INATIVO">Inativo</option>
+            </select>
+
+            <div className="flex gap-2">
+              <Button type="submit" className="bg-green-600 flex-1">
+                {editandoId ? "Atualizar" : "Salvar"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 bg-red-600"
+                onClick={() => setModalAberto(false)}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
