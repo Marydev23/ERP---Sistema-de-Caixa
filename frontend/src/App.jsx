@@ -6,7 +6,7 @@ import Despesas from "./paginas/Despesas";
 import Receitas from "./paginas/Receitas";
 import Funcionarios from "./paginas/Funcionarios";
 import Configuracao from "./paginas/configuracao/Configuracao";
-import Pagamentos from "./paginas/Pagamentos";
+import Orcamento from "./paginas/Orcamento";
 
 function App() {
   return (
@@ -56,12 +56,12 @@ function App() {
           }
         />
 
-        {/* Pagamentos */}
+        {/* Orçamentos */}
         <Route
-          path="/pagamentos"
+          path="/orcamento"
           element={
             <Layout>
-              <Pagamentos />
+              <Orcamento />
             </Layout>
           }
         />

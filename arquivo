@@ -20,3 +20,12 @@ github
 git add . 
 git commit -m "mensagem do que você mudou"
 git push
+
+
+
+Para verificar se ta no github : git status 
+mensagem de retorno : nothing to commit, working tree clean
+
+BANCO DE DADOS 
+
+OPEN DATAbase

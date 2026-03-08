@@ -102,17 +102,17 @@ export default function Receitas() {
   }
 
   function editarReceita(r) {
-    setDescricao(r.Descricao);
-    setValor(r.Valor);
-    setData(r.Data);
-    setFormaPagamento(r.Forma_pagamento);
-    setCategoria(r.CategoriaID);
-    setParcelas(r.Parcelas || "");
-    setDataRecebimento(r.DataRecebimento || "");
-    setCliente(r.Cliente || "");
-    setDesconto(r.Desconto || "");
-    setStatus(r.Status || "");
+    setDescricao(r.Descricao || "");
 
+    setValor(r.Valor ? Number(r.Valor).toFixed(2) : "");
+    setData(r.Data || "");
+    setFormaPagamento(r.Forma_pagamento || "");
+    setCategoria(r.CategoriaID || "");
+    setParcelas(r.Parcelas ? String(r.Parcelas) : "1");
+    setDataRecebimento(r.DataRecebimento || r.Data || "");
+    setCliente(r.Cliente || "");
+    setDesconto(r.Desconto ? Number(r.Desconto).toFixed(2) : "0");
+    setStatus(r.Status || "Pago");
     setEditandoId(r.ID);
   }
 
@@ -137,6 +137,26 @@ export default function Receitas() {
     setEditandoId("");
   }
 
+  function calcularStatus(r) {
+    if (r.Status && r.Status.toLowerCase() === "pago") return "Pago";
+
+    const dataVencimentoStr = r.DataRecebimento || r.Data;
+    if (!dataVencimentoStr) return "Sem Data";
+
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    const vencimento = new Date(dataVencimentoStr + "T00:00:00");
+    if (isNaN(vencimento.getTime())) return "Data Inválida";
+
+    if (r.Forma_pagamento === "Boleto") {
+      if (vencimento.getTime() > hoje.getTime()) return "A receber";
+      if (vencimento.getTime() === hoje.getTime()) return "Vence hoje";
+      return "Atrasado";
+    }
+
+    return "Recebido";
+  }
   const totalReceitas = listaReceitas.reduce(
     (acc, r) => acc + Number(r.ValorTotal),
     0,
@@ -181,8 +201,6 @@ export default function Receitas() {
             </div>
 
             <div className="flex">
-              {/* PERÍODO adcionar aqui um filtro */}
-
               <select
                 className="w-40 bg-gray-100 border border-gray-300 text-gray-700 text-xs font-medium py-2 rounded-l-lg hover:bg-gray-200 transition flex items-center justify-center "
                 value={busca}
@@ -418,13 +436,17 @@ export default function Receitas() {
                     <td className="p-2">
                       <div
                         className={`flex items-center gap-1 font-semibold ${
-                          r.Status === "Pago"
+                          calcularStatus(r) === "Pago"
                             ? "text-green-600"
-                            : "text-red-600"
+                            : calcularStatus(r) === "A receber"
+                              ? "text-yellow-600"
+                              : "text-red-600"
                         }`}
                       >
-                        {r.Status === "Em aberto" && <LinkIcon size={14} />}
-                        {r.Status}
+                        {calcularStatus(r) === "A receber" && (
+                          <LinkIcon size={14} />
+                        )}
+                        {calcularStatus(r)}
                       </div>
                     </td>
                     <td className="p-2 flex gap-2">

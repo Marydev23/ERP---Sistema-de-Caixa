@@ -2,7 +2,7 @@ import sqlite3
 from werkzeug.security import generate_password_hash
 
 # Nome do banco
-bancoDados = "meubanco.db"
+bancoDados = "meu_banco.db"
 
 # Conectar ao banco
 conn = sqlite3.connect(bancoDados)
@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS receitas (
 cur.execute("""
 CREATE TABLE IF NOT EXISTS despesas (
     ID INTEGER PRIMARY KEY AUTOINCREMENT,
-    Data TEXT NOT NULL,
+    DataPagamento TEXT,
     DataVencimento TEXT NOT NULL,
     Nome TEXT,
     Descricao TEXT,

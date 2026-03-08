@@ -99,16 +99,16 @@ export function Sidebar() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Link
-                  to="/pagamentos"
+                  to="/orcamento"
                   className="flex h-9 w-9  shrink-0 items-center justify-center 
                   rounded-lg text-nuted-foreground transition-colors hover:text-foreground"
                 >
                   <Barcode className="h-5 w-5" />
-                  <span className="sr-only">A pagar</span>
+                  <span className="sr-only">Orcamento</span>
                 </Link>
               </TooltipTrigger>
 
-              <TooltipContent side="right">A pagar </TooltipContent>
+              <TooltipContent side="right">Orcamento </TooltipContent>
             </Tooltip>
 
             <Tooltip>

@@ -12,7 +12,7 @@ CORS(app)
 # Conexão correta com o banco
 # ===============================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "meubanco.db")
+DB_PATH = os.path.join(BASE_DIR, "meu_banco.db")
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -330,7 +330,7 @@ def excluir_receitas(id):
 def cadastrar_despesa():
     data = request.json
 
-    data_despesa = data.get("Data")
+    data_despesa = data.get("DataPagamento")
     data_vencimento = data.get("DataVencimento")
     nome = data.get("Nome")
     descricao = data.get("Descricao")
@@ -342,14 +342,14 @@ def cadastrar_despesa():
     except:
         return {"erro": "Valor inválido!"}, 400
 
-    if valor is None or not data_despesa or not data_vencimento:
-        return {"erro": "Valor, Data e Data de Vencimento são obrigatórios!"}, 400
+    if not valor or not data_vencimento:
+        return {"erro": "Valor e Data de Vencimento são obrigatórios!"}, 400
 
     conn = get_db()
     try:
         conn.execute("""
             INSERT INTO despesas 
-            (Data, DataVencimento, Nome, Descricao, Valor, Status, CategoriaID)
+            (DataPagamento, DataVencimento, Nome, Descricao, Valor, Status, CategoriaID)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (data_despesa, data_vencimento, nome, descricao, valor, status, categoria_id))
 
@@ -366,15 +366,14 @@ def listar_despesas():
         COALESCE(categorias.Nome,'Sem Categoria') AS Categoria
         FROM despesas
         LEFT JOIN categorias ON categorias.ID = despesas.CategoriaID
-        ORDER BY Data DESC
-    """)
-
+        ORDER BY DataPagamento DESC
+        """)
     dados = cur.fetchall()
 
     despesas = [
         {
             "ID": row["ID"],
-            "Data": row["Data"],
+            "DataPagamento": row["DataPagamento"],
             "DataVencimento": row["DataVencimento"],
             "Nome": row["Nome"],
             "Descricao": row["Descricao"],
@@ -395,7 +394,7 @@ def listar_despesas():
 def editar_despesa(id):
     data = request.json
 
-    data_despesa = data.get("Data")
+    data_despesa = data.get("DataPagamento")
     data_vencimento = data.get("DataVencimento")
     nome = data.get("Nome")
     descricao = data.get("Descricao")
@@ -406,7 +405,7 @@ def editar_despesa(id):
     conn = get_db()
     cur = conn.execute("""
         UPDATE despesas
-        SET Data = ?, 
+        SET DataPagamento = ?, 
             DataVencimento = ?, 
             Nome = ?, 
             Descricao = ?, 
