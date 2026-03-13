@@ -29,7 +29,7 @@ const pagamentos = [
   },
 ];
 
-const ChartPizza = () => {
+const ChartOverview = () => {
   const getIcon = (tipo) => {
     switch (tipo) {
       case "Entrada":
@@ -84,4 +84,4 @@ const ChartPizza = () => {
   );
 };
 
-export default ChartPizza;
+export default ChartOverview;

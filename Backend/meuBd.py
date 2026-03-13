@@ -103,36 +103,77 @@ CREATE TABLE IF NOT EXISTS despesas (
 );
 """)
 
-# ========================
-# TABELA PAGAMENTOS
-# ========================
-cur.execute("""
-CREATE TABLE IF NOT EXISTS pagamentos (
-    ID INTEGER PRIMARY KEY AUTOINCREMENT,
-    Valor REAL NOT NULL,
-    Data TEXT NOT NULL,
-    Descricao TEXT,
-     Nome TEXT,
-    Forma_pagamento TEXT,
-    CategoriaID INTEGER,
-    CriadoEm TEXT DEFAULT (datetime('now','localtime')),
-    FOREIGN KEY (CategoriaID) REFERENCES categorias(ID) ON DELETE SET NULL
-);
-""")
 
 # ========================
 # TABELA EMPRESA
 # ========================
 cur.execute("""
-CREATE TABLE IF NOT EXISTS empresa (
+CREATE TABLE empresa (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nome TEXT,
+  cnpj TEXT,
+  endereco TEXT,
+  cidade TEXT,
+  estado TEXT,
+  cep TEXT,
+  telefone TEXT,
+  email TEXT,
+  site TEXT,
+  instagran TEXT,
+  slogan TEXT,
+  logo TEXT
+);
+""")
+
+# ========================
+# TABELA PRODUTOS
+# ========================
+cur.execute("""
+CREATE TABLE IF NOT EXISTS produtos (
     ID INTEGER PRIMARY KEY AUTOINCREMENT,
-    Nome TEXT,
+    Nome_produto TEXT NOT NULL,
+    Valor_unitario REAL NOT NULL,
+    CategoriaID INTEGER,
+    CriadoEm TEXT DEFAULT (datetime('now','localtime'))
+);
+""")
+
+# ========================
+# TABELA ORCAMENTOS
+# ========================
+cur.execute("""
+CREATE TABLE IF NOT EXISTS orcamentos (
+    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Cliente TEXT,
     CNPJ TEXT,
     Endereco TEXT,
-    Telefone TEXT,
-    Email TEXT,
-    Logo BLOB,
+    Contato TEXT,
+    Frete REAL,
+    Total REAL,
     CriadoEm TEXT DEFAULT (datetime('now','localtime'))
+);
+""")
+
+cur.execute("""
+ALTER TABLE orcamentos
+ADD COLUMN empresa_id INTEGER
+""")
+
+# ========================
+# TABELA ITENS DO ORÇAMENTO
+# ========================
+cur.execute("""
+CREATE TABLE IF NOT EXISTS itens_produtos (
+    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+    OrcamentoID INTEGER,
+    ProdutoID INTEGER,
+    Descricao TEXT,
+    Quantidade INTEGER,
+    Preco_unitario REAL,
+    Valor_total REAL,
+    CriadoEm TEXT DEFAULT (datetime('now','localtime')),
+    FOREIGN KEY (OrcamentoID) REFERENCES orcamentos(ID),
+    FOREIGN KEY (ProdutoID) REFERENCES produtos(ID)
 );
 """)
 

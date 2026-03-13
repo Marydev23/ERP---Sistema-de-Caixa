@@ -1,4 +1,6 @@
-from flask import Flask, request, jsonify
+import uuid
+
+from flask import Flask, request, jsonify, send_from_directory
 import sqlite3
 from flask_cors import CORS
 import os
@@ -582,54 +584,308 @@ def listar_categorias():
     categorias = [{"ID": row["ID"], "Nome": row["Nome"]} for row in dados]
     return jsonify(categorias)
 
+
+
+
+# Pasta para salvar as imagens  ns
+IMAGES_FOLDER = "imagens"
+os.makedirs(IMAGES_FOLDER, exist_ok=True)
+
+
+@app.route("/imagens/<filename>")
+def imagens(filename):
+    return send_from_directory(IMAGES_FOLDER, filename)
+
+# ===============================
+# EMPRESA CADASTRAR
+# ===============================
+
+@app.route("/empresa", methods=["POST"])
+def salvar_empresa():
+    conn = get_db()
+
+   
+    data = request.form or request.json 
+
+
+    nome = data.get("nome")
+    cnpj = data.get("cnpj")
+    endereco = data.get("endereco")
+    cidade = data.get("cidade")
+    estado = data.get("estado")
+    cep = data.get("cep")
+    telefone = data.get("telefone")
+    email = data.get("email")
+    site = data.get("site")
+    instagran = data.get("instagran")
+    slogan = data.get("slogan")
+ 
+    logo_file = request.files.get("logo")
+    logo_path = None
+    if logo_file:
+        logo_filename = f"{uuid.uuid4()}_{logo_file.filename}"
+        logo_path = os.path.join(IMAGES_FOLDER, logo_filename)
+        logo_file.save(logo_path)
+
+  
+    conn.execute("""
+        INSERT OR REPLACE INTO empresa
+        (id, nome, cnpj, endereco, cidade, estado, cep, telefone, email, site, instagran, slogan, logo)
+        VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (nome, cnpj, endereco, cidade, estado, cep, telefone, email, site, instagran, slogan, logo_path))
+    conn.commit()
+
+    return jsonify({"mensagem": "Empresa salva com sucesso!", "logo": logo_path})
+
+
+
+# ===============================
+# EMPRESA EDITAR
+# ===============================
+
+@app.route("/empresa", methods=["GET"])
+def get_empresa():
+    conn = get_db()
+    empresa = conn.execute("SELECT * FROM empresa WHERE id = 1").fetchone()
+    if empresa:
+        return jsonify(dict(empresa))
+    return jsonify({"erro": "Empresa não encontrada"}), 404
+
 # ===============================
 # EMPRESA
 # ===============================
 
-@app.route("/empresa", methods=["POST"])
-def criar_empresa():
-    data = request.json
-    nome = data.get("Nome")
-    cnpj = data.get("CNPJ")
-    telefone = data.get("Telefone")
-    endereco = data.get("Endereco")
-    email = data.get("Email")
-    logo = data.get("Logo")
 
-    if not nome or not cnpj:
-        return {"erro": "Nome e CNPJ são obrigatórios"}, 400
 
-    conn = get_db()
-    conn.execute("INSERT INTO empresa (Nome, CNPJ, Telefone, Endereco, Email, Logo) VALUES (?, ?, ?, ?, ?, ?)", (nome, cnpj, telefone, endereco, email, logo))
-    conn.commit()
-    return {"mensagem": "Empresa cadastrada com sucesso!"}, 201
 
-@app.route("/empresa/<int:id>", methods=["GET"])
-def buscar_empresa(id):
-    conn = get_db()
-    cur = conn.execute("SELECT * FROM empresa WHERE ID = ?", (id,))
-    row = cur.fetchone()
-    if not row:
-        return {"erro": "Empresa não encontrada"}, 404
-    empresa = {"ID": row["ID"], "Nome": row["Nome"], "CNPJ": row["CNPJ"], "Telefone": row["Telefone"], "Endereco": row["Endereco"], "Email": row["Email"], "Logo": row["Logo"], "CriadoEm": row["CriadoEm"]}
-    return jsonify(empresa)
+# ===============================
+# EMPRESA APAGAR
+# ===============================
 
 @app.route("/empresa/<int:id>", methods=["PUT"])
 def editar_empresa(id):
-    data = request.json
-    nome = data.get("Nome")
-    cnpj = data.get("CNPJ")
-    telefone = data.get("Telefone")
-    endereco = data.get("Endereco")
-    email = data.get("Email")
-    logo = data.get("Logo")
-
     conn = get_db()
-    cur = conn.execute("UPDATE empresa SET Nome = ?, CNPJ = ?, Telefone = ?, Endereco = ?, Email = ?, Logo = ? WHERE ID = ?", (nome, cnpj, telefone, endereco, email, logo, id))
+
+    nome = request.form.get("nome")
+    cnpj = request.form.get("cnpj")
+    endereco = request.form.get("endereco")
+    cidade = request.form.get("cidade")
+    estado = request.form.get("estado")
+    cep = request.form.get("cep")
+    telefone = request.form.get("telefone")
+    email = request.form.get("email")
+    site = request.form.get("site")
+    instagram = request.form.get("instagram")
+    slogan = request.form.get("slogan")
+
+    logo_file = request.files.get("logo")
+    logo_path = None
+    if logo_file:
+        logo_filename = f"{uuid.uuid4()}_{logo_file.filename}"
+        logo_path = os.path.join(IMAGES_FOLDER, logo_filename)
+        logo_file.save(logo_path)
+
+    cur = conn.execute("""
+        UPDATE empresa SET
+            nome = ?, cnpj = ?, endereco = ?, cidade = ?, estado = ?, cep = ?,
+            telefone = ?, email = ?, site = ?, instagran = ?, slogan = ?, logo = ?
+        WHERE id = ?
+    """, (nome, cnpj, endereco, cidade, estado, cep, telefone, email, site, instagram, slogan, logo_path, id))
+
     conn.commit()
+
     if cur.rowcount == 0:
         return {"erro": "Empresa não encontrada"}, 404
-    return {"mensagem": "Empresa atualizada com sucesso!"}
+
+    return jsonify({"mensagem": "Empresa atualizada com sucesso!", "logo": logo_path})
+
+
+
+
+
+
+
+# ===============================
+# LISTAR PRODUTOS
+# ===============================
+
+@app.route("/produtos", methods=["GET"])
+def listar_produtos():
+
+    conn = get_db()
+
+    produtos = conn.execute("SELECT * FROM produtos").fetchall()
+
+    resultado = []
+
+    for p in produtos:
+        resultado.append({
+            "id": p["ID"],
+            "Nome_produto": p["Nome_produto"],
+            "Valor_unitario": p["Valor_unitario"],
+            "CategoriaID": p["CategoriaID"]
+        })
+
+    return jsonify(resultado)
+
+
+# ===============================
+# CRIAR PRODUTO
+# ===============================
+
+@app.route("/produtos", methods=["POST"])
+def criar_produto():
+
+    data = request.json
+
+    nome = data.get("Nome_produto")
+    valor = data.get("Valor_unitario")
+    categoria = data.get("CategoriaID")
+
+    if not nome or not valor:
+        return {"erro": "Nome e valor obrigatórios"}, 400
+
+    conn = get_db()
+
+    conn.execute(
+        """
+        INSERT INTO produtos
+        (Nome_produto, Valor_unitario, CategoriaID)
+        VALUES (?, ?, ?)
+        """,
+        (nome, valor, categoria)
+    )
+
+    conn.commit()
+
+    return {"mensagem": "Produto cadastrado"}, 201
+
+
+# ===============================
+# SALVAR ORÇAMENTO
+# ===============================
+
+@app.route("/orcamentos", methods=["POST"])
+def salvar_orcamento():
+
+    data = request.json
+
+    cliente = data.get("cliente")
+    cnpj = data.get("cnpj")
+    endereco = data.get("endereco")
+    contato = data.get("contato")
+    frete = data.get("frete")
+    total = data.get("total")
+    itens = data.get("itens")
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO orcamentos
+        (Cliente, CNPJ, Endereco, Contato, Frete,  Total)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (cliente, cnpj, endereco, contato, frete,  total))
+
+    orcamento_id = cursor.lastrowid
+
+    for item in itens:
+
+        cursor.execute("""
+            INSERT INTO itens_produtos
+            (OrcamentoID, ProdutoID, Descricao, Quantidade, Preco_unitario, Valor_total)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (
+            orcamento_id,
+            item["id"],
+            item["nome"],
+            item["quantidade"],
+            item["preco"],
+            item["total"]
+        ))
+
+    conn.commit()
+
+    return {"mensagem": "Orçamento salvo com sucesso"}
+
+
+# ===============================
+# LISTAR ORÇAMENTOS
+# ===============================
+
+@app.route("/orcamentos", methods=["GET"])
+def listar_orcamentos():
+
+    conn = get_db()
+
+    orcamentos = conn.execute("""
+        SELECT * FROM orcamentos
+        ORDER BY ID DESC
+    """).fetchall()
+
+    lista = []
+
+    for o in orcamentos:
+        lista.append(dict(o))
+
+    return jsonify(lista)
+
+
+# ===============================
+# LISTAR ITENS DE UM ORÇAMENTO
+# ===============================
+
+@app.route("/orcamentos/<int:id>/itens", methods=["GET"])
+def listar_itens(id):
+
+    conn = get_db()
+
+    itens = conn.execute("""
+        SELECT * FROM itens_produtos
+        WHERE OrcamentoID = ?
+    """, (id,)).fetchall()
+
+    lista = []
+
+    for i in itens:
+        lista.append(dict(i))
+
+    return jsonify(lista)
+
+
+# ===============================
+# DELETAR ITEM
+# ===============================
+
+@app.route("/itens/<int:id>", methods=["DELETE"])
+def deletar_item(id):
+
+    conn = get_db()
+
+    conn.execute(
+        "DELETE FROM itens_produtos WHERE ID = ?",
+        (id,)
+    )
+
+    conn.commit()
+
+    return {"mensagem": "Item removido"}
+
+
+
+# ===============================
+# API PARA GERAR ORÇAMENTO EM PDF AQUI
+# ===============================
+
+@app.route("/empresa", methods=["GET"])
+def dados_empresa():
+    conn = get_db()
+    empresa = conn.execute("SELECT * FROM empresa LIMIT 1").fetchone()  # assumindo só 1 empresa
+    if empresa:
+        return jsonify(dict(empresa))
+    return jsonify({"erro": "Empresa não encontrada"}), 404
+
+
 
 # ===============================
 # Rodar servidor
