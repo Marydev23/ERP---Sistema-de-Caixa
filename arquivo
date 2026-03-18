@@ -14,9 +14,8 @@ npm run dev
 
 rfce
 
-
-git status
 git add .
+git status
 git commit -m "descrição da mudança"
 git push
 

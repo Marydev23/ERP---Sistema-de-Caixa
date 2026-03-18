@@ -1,6 +1,15 @@
 import { useState, useEffect } from "react";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
-import { Pencil, Trash, LinkIcon, Search, Wallet } from "lucide-react";
+import {
+  Pencil,
+  Trash,
+  LinkIcon,
+  Search,
+  Wallet,
+  FileText,
+} from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function Receitas() {
   const [descricao, setDescricao] = useState("");
@@ -182,8 +191,98 @@ export default function Receitas() {
       r.Cliente?.toLowerCase().includes(busca.toLowerCase()),
   );
 
+  function gerarRelatorio() {
+    const doc = new jsPDF();
+
+    const hoje = new Date();
+
+    const trintaDiasAtras = new Date();
+    trintaDiasAtras.setDate(hoje.getDate() - 30);
+
+    const vendas30dias = listaFiltrada.filter((r) => {
+      const dataVenda = new Date(r.Data);
+      return dataVenda >= trintaDiasAtras && dataVenda <= hoje;
+    });
+
+    doc.setFontSize(18);
+    doc.text("Relatório de Vendas - Últimos 30 dias", 14, 15);
+
+    doc.setFontSize(10);
+    doc.text(`Gerado em: ${new Date().toLocaleDateString("pt-BR")}`, 14, 22);
+
+    const dadosTabela = vendas30dias.map((r) => [
+      formatarData(r.Data),
+      r.Cliente || "-",
+      r.Descricao,
+      r.Forma_pagamento,
+      formatarValor(r.Valor),
+      formatarValor(r.Desconto),
+      formatarValor(r.ValorTotal),
+    ]);
+
+    autoTable(doc, {
+      startY: 30,
+      head: [
+        [
+          "Data",
+          "Cliente",
+          "Descrição",
+          "Forma de Pagamento",
+          "Valor",
+          "Desconto",
+          "Total",
+        ],
+      ],
+      body: dadosTabela,
+    });
+
+    const formas = [
+      "Dinheiro",
+      "PIX",
+      "Cartão de débito",
+      "Cartão de crédito",
+      "Boleto",
+    ];
+
+    const totaisPorForma = {};
+
+    formas.forEach((f) => {
+      totaisPorForma[f] = vendas30dias
+        .filter((r) => r.Forma_pagamento === f)
+        .reduce((acc, r) => acc + Number(r.ValorTotal || r.Valor || 0), 0);
+    });
+
+    const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 40;
+
+    doc.setFontSize(12);
+    doc.text("Resumo por Forma de Pagamento", 14, finalY);
+
+    const resumoDados = formas.map((f) => [
+      f,
+      formatarValor(totaisPorForma[f] || 0),
+    ]);
+
+    autoTable(doc, {
+      startY: finalY + 6,
+      head: [["Forma de Pagamento", "Total"]],
+      body: resumoDados,
+      theme: "grid",
+      styles: {
+        fontSize: 10,
+        cellPadding: 2,
+        halign: "left",
+      },
+      headStyles: {
+        fillColor: [220, 220, 220],
+        textColor: 0,
+        fontStyle: "bold",
+      },
+    });
+
+    doc.save("relatorio_vendas_30_dias.pdf");
+  }
   return (
-    <div className="w-full min-h-screen">
+    <div className="sm:ml-64 p-6">
       <div className="max-w-7xl mx-auto p-3 space-y-6 ">
         <CardContent>
           <div className="flex items-center justify-between ">
@@ -224,8 +323,11 @@ export default function Receitas() {
                 </svg>
               </select>
 
-              {/* NOVA VENDA */}
-              <button className="w-40 bg-green-600 hover:bg-green-700 text-white text-xs font-medium py-2 rounded-r-lg border-l-0 transition">
+              <button
+                onClick={gerarRelatorio}
+                className="w-40 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white text-xs font-medium py-2 rounded-r-lg transition"
+              >
+                <FileText size={16} />
                 Gerar Relatório
               </button>
             </div>
@@ -238,7 +340,6 @@ export default function Receitas() {
               Registrar Nova Venda
             </CardTitle>
 
-            {/* LINHA 1 */}
             <div className="grid grid-cols-12 gap-4">
               <div className="col-span-12 md:col-span-5">
                 <label className="text-sm font-medium text-slate-700">
@@ -352,7 +453,7 @@ export default function Receitas() {
                           type="date"
                           value={dataRecebimento}
                           onChange={(e) => setDataRecebimento(e.target.value)}
-                          className="h-7 w-40 border border-slate-300 rounded-lg px-3 focus:ring-2 focus:ring-green-400 focus:outline-none"
+                          className="h-7 w-28 border border-slate-300 rounded-lg px-1 focus:ring-2 focus:ring-green-400 focus:outline-none"
                         />
                       )}
                     </>

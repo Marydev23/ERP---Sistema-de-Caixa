@@ -202,7 +202,7 @@ export default function Despesas() {
     .reduce((acc, d) => acc + Number(d.Valor || 0), 0);
 
   return (
-    <div className="w-full min-h-screen">
+    <div className="sm:ml-64 p-6">
       <div className="max-w-7xl mx-auto p-3 space-y-6 ">
         <CardContent>
           <div className="flex items-center justify-between ">

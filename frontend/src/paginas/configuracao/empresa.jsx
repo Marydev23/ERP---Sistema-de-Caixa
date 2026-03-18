@@ -14,8 +14,8 @@ export default function Empresa() {
   const [instagran, setInstagran] = useState("");
   const [slogan, setSlogan] = useState("");
   const [logo, setLogo] = useState(null);
+  const [editando, setEditando] = useState(false);
 
-  // Carrega dados existentes ao montar o componente
   useEffect(() => {
     carregarEmpresa();
   }, []);
@@ -82,7 +82,7 @@ export default function Empresa() {
     setSite("");
     setInstagran("");
     setSlogan("");
-    setlogo(null);
+    setLogo(null);
   }
 
   return (
@@ -94,17 +94,67 @@ export default function Empresa() {
       <h2 className="text-2xl font-semibold mb-6">Dados da Empresa</h2>
 
       <div className="space-y-5">
-        <Input label="Nome da Empresa" value={nome} onChange={setNome} />
-        <Input label="CNPJ" value={cnpj} onChange={setCnpj} />
-        <Input label="Endereço" value={endereco} onChange={setEndereco} />
-        <Input label="Cidade" value={cidade} onChange={setCidade} />
-        <Input label="Estado" value={estado} onChange={setEstado} />
-        <Input label="CEP" value={cep} onChange={setCep} />
-        <Input label="Telefone" value={telefone} onChange={setTelefone} />
-        <Input label="E-mail" value={email} onChange={setEmail} />
-        <Input label="Site" value={site} onChange={setSite} />
-        <Input label="Instagran" value={instagran} onChange={setInstagran} />
-        <Input label="Slogan" value={slogan} onChange={setSlogan} />
+        <Input
+          label="Nome da Empresa"
+          value={nome}
+          onChange={setNome}
+          disabled={!editando}
+        />
+        <Input
+          label="CNPJ"
+          value={cnpj}
+          onChange={setCnpj}
+          disabled={!editando}
+        />
+        <Input
+          label="Endereço"
+          value={endereco}
+          onChange={setEndereco}
+          disabled={!editando}
+        />
+        <Input
+          label="Cidade"
+          value={cidade}
+          onChange={setCidade}
+          disabled={!editando}
+        />
+        <Input
+          label="Estado"
+          value={estado}
+          onChange={setEstado}
+          disabled={!editando}
+        />
+        <Input label="CEP" value={cep} onChange={setCep} disabled={!editando} />
+        <Input
+          label="Telefone"
+          value={telefone}
+          onChange={setTelefone}
+          disabled={!editando}
+        />
+        <Input
+          label="E-mail"
+          value={email}
+          onChange={setEmail}
+          disabled={!editando}
+        />
+        <Input
+          label="Site"
+          value={site}
+          onChange={setSite}
+          disabled={!editando}
+        />
+        <Input
+          label="Instagran"
+          value={instagran}
+          onChange={setInstagran}
+          disabled={!editando}
+        />
+        <Input
+          label="Slogan"
+          value={slogan}
+          onChange={setSlogan}
+          disabled={!editando}
+        />
 
         <div className="space-y-2">
           <label className="font-medium">Logo</label>
@@ -133,9 +183,9 @@ export default function Empresa() {
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => {
-              salvarEmpresa();
-              limparFormulario();
+            onClick={async () => {
+              await salvarEmpresa();
+              setEditando(false);
             }}
             className="bg-blue-600 text-white w-24 h-8 px-2 py-1 text-xs hover:bg-blue-700 transition"
           >
@@ -144,7 +194,7 @@ export default function Empresa() {
 
           <button
             type="button"
-            onClick={carregarEmpresa}
+            onClick={() => setEditando(true)}
             className="bg-gray-600 text-white w-24 h-8 px-2 py-1 text-xs hover:bg-gray-700 transition"
           >
             Editar
@@ -154,18 +204,17 @@ export default function Empresa() {
     </main>
   );
 }
-
-// Componente Input genérico
-function Input({ label, value, onChange, placeholder }) {
+function Input({ label, value, onChange, placeholder, disabled }) {
   return (
     <div className="space-y-2">
       <label className="font-medium">{label}</label>
       <input
         type="text"
         value={value}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder || label}
-        className="w-full border rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full border rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
       />
     </div>
   );

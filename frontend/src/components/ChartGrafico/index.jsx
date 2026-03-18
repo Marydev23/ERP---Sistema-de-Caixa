@@ -39,27 +39,30 @@ export default function ChartGrafico() {
         ];
 
         const resumo = {};
-
         meses.forEach((mes) => {
           resumo[mes] = { mes, entradas: 0, saidas: 0 };
         });
 
-        // RECEITAS
         receitas
-          .filter((r) => r.Status === "Pago")
+          .filter((r) => r.Status?.toLowerCase() === "pago")
           .forEach((r) => {
-            const data = new Date(r.Data);
-            const mes = meses[data.getMonth()];
-            resumo[mes].entradas += Number(r.ValorTotal || r.Valor);
+            if (!r.Data) return;
+
+            const dataReceita = new Date(r.Data);
+            const mes = meses[dataReceita.getMonth()];
+
+            resumo[mes].entradas += Number(r.ValorTotal || r.Valor || 0);
           });
 
-        // DESPESAS
         despesas
-          .filter((d) => d.Status === "Pago")
+          .filter((d) => d.Status?.toLowerCase() === "pago")
           .forEach((d) => {
-            const data = new Date(d.Data);
-            const mes = meses[data.getMonth()];
-            resumo[mes].saidas += Number(d.Valor);
+            if (!d.DataPagamento) return;
+
+            const dataDespesa = new Date(d.DataPagamento);
+            const mes = meses[dataDespesa.getMonth()];
+
+            resumo[mes].saidas += Number(d.Valor || 0);
           });
 
         setData(Object.values(resumo));
@@ -72,20 +75,20 @@ export default function ChartGrafico() {
   }, []);
 
   return (
-    <Card className="w-full md:w-1/2 md:max-w-[600px]">
-      <CardHeader>
+    <Card className="flex-1">
+      <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg sm:text-xl text-gray-800">
-            Receitas x Despesas por mês
+          <CardTitle className="text-base font-semibold text-gray-800">
+            Receitas x Despesas
           </CardTitle>
-          <DollarSign className="h-4 w-4" />
+          <DollarSign className="h-4 w-4 text-gray-500" />
         </div>
       </CardHeader>
 
-      <CardContent className="h-[300px]">
+      <CardContent className="h-[260px]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
-            <CartesianGrid vertical={false} />
+            <CartesianGrid vertical={false} strokeDasharray="3 3" />
             <XAxis dataKey="mes" />
             <Tooltip />
             <Legend />
@@ -95,7 +98,6 @@ export default function ChartGrafico() {
               dataKey="entradas"
               stroke="#10b981"
               strokeWidth={3}
-              dot
               name="Receitas"
             />
 
@@ -104,7 +106,6 @@ export default function ChartGrafico() {
               dataKey="saidas"
               stroke="#ef4444"
               strokeWidth={3}
-              dot
               name="Despesas"
             />
           </LineChart>

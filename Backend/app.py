@@ -5,6 +5,7 @@ import sqlite3
 from flask_cors import CORS
 import os
 from datetime import datetime, timedelta  
+from flask import send_from_directory
 
 
 app = Flask(__name__)
@@ -15,6 +16,10 @@ CORS(app)
 # ===============================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "meu_banco.db")
+
+
+IMAGES_FOLDER = "imagens"
+os.makedirs(IMAGES_FOLDER, exist_ok=True)
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -588,13 +593,9 @@ def listar_categorias():
 
 
 # Pasta para salvar as imagens  ns
-IMAGES_FOLDER = "imagens"
-os.makedirs(IMAGES_FOLDER, exist_ok=True)
-
-
-@app.route("/imagens/<filename>")
-def imagens(filename):
-    return send_from_directory(IMAGES_FOLDER, filename)
+@app.route('/imagens/<path:nome>')
+def imagens(nome):
+    return send_from_directory('imagens', nome)
 
 # ===============================
 # EMPRESA CADASTRAR

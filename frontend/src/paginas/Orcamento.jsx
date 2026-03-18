@@ -11,19 +11,26 @@ import {
 } from "lucide-react";
 
 export default function Orcamento() {
+  // ===============================
+  // STATES
+  // ===============================
+
   const [cliente, setCliente] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [endereco, setEndereco] = useState("");
   const [contato, setContato] = useState("");
+
   const [produtos, setProdutos] = useState([]);
   const [produtoSelecionado, setProdutoSelecionado] = useState("");
   const [precoUnitario, setPrecoUnitario] = useState("");
   const [quantidade, setQuantidade] = useState(1);
-  const [nomeProduto, setNomeProduto] = useState("");
 
+  const [nomeProduto, setNomeProduto] = useState("");
   const [categoria, setCategoria] = useState("");
+
   const [itens, setItens] = useState([]);
   const [frete, setFrete] = useState(0);
+
   const [openModalProduto, setOpenModalProduto] = useState(false);
   const [openModalItem, setOpenModalItem] = useState(false);
 
@@ -31,52 +38,95 @@ export default function Orcamento() {
     carregarProdutos();
   }, []);
 
+  // ===============================
+  // PRODUTOS
+  // ===============================
+
   const carregarProdutos = async () => {
     try {
       const res = await fetch("http://localhost:5000/produtos");
-      const data = await res.json();
 
-      console.log("Produtos do banco:", data);
+      if (!res.ok) throw new Error("Erro ao buscar produtos");
+
+      const data = await res.json();
 
       setProdutos(data);
     } catch (erro) {
       console.log("Erro ao buscar produtos:", erro);
     }
   };
+
   const selecionarProduto = (id) => {
     const idNum = Number(id);
+
     setProdutoSelecionado(idNum);
-    const produto = produtos.find((p) => p.id === idNum);
-    if (produto) setPrecoUnitario(produto.Valor_unitario);
+
+    setPrecoUnitario("");
   };
 
   const salvarProduto = async (e) => {
     e.preventDefault();
 
-    const response = await fetch("http://localhost:5000/produtos", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        Nome_produto: nomeProduto,
-        Valor_unitario: precoUnitario,
-        CategoriaID: categoria,
-      }),
-    });
+    try {
+      const response = await fetch("http://localhost:5000/produtos", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          Nome_produto: nomeProduto,
+          Valor_unitario: precoUnitario,
+          CategoriaID: categoria,
+        }),
+      });
 
-    if (response.ok) {
+      if (!response.ok) {
+        throw new Error("Erro ao cadastrar produto");
+      }
+
       alert("Produto cadastrado com sucesso!");
 
       setNomeProduto("");
       setPrecoUnitario("");
       setCategoria("");
       setOpenModalProduto(false);
+
       carregarProdutos();
-    } else {
+    } catch (erro) {
+      console.log(erro);
       alert("Erro ao cadastrar produto");
     }
   };
+
+  const adicionarProduto = () => {
+    const produto = produtos.find((p) => p.id === produtoSelecionado);
+
+    if (!produto) return;
+
+    const novoItem = {
+      id: produto.id,
+      nome: produto.Nome_produto,
+      quantidade: Number(quantidade),
+      preco: Number(precoUnitario),
+      total: Number(quantidade) * Number(precoUnitario),
+    };
+
+    setItens([...itens, novoItem]);
+
+    setProdutoSelecionado("");
+    setQuantidade(1);
+    setPrecoUnitario("");
+  };
+
+  const removerItem = (index) => {
+    const novaLista = itens.filter((_, i) => i !== index);
+
+    setItens(novaLista);
+  };
+
+  const subtotal = itens.reduce((acc, item) => acc + item.total, 0);
+
+  const totalGeral = subtotal + Number(frete);
 
   const salvarOrcamento = async () => {
     const dados = {
@@ -98,179 +148,168 @@ export default function Orcamento() {
         body: JSON.stringify(dados),
       });
 
-      if (res.ok) {
-        alert("Orçamento salvo com sucesso!");
-        return result;
-      } else {
-        alert("Erro ao salvar orçamento");
+      if (!res.ok) {
+        throw new Error("Erro ao salvar orçamento");
       }
+
+      const result = await res.json();
+
+      return result;
     } catch (erro) {
       console.log(erro);
+      alert("Erro ao salvar orçamento");
     }
   };
 
-  function limparOrcamento() {
+  const limparOrcamento = () => {
     setCliente("");
     setCnpj("");
     setEndereco("");
     setContato("");
     setItens([]);
     setFrete(0);
-  }
-
-  const adicionarProduto = () => {
-    const produto = produtos.find((p) => p.id == produtoSelecionado);
-
-    if (!produto) return;
-
-    const novoItem = {
-      id: produto.id,
-      nome: produto.Nome_produto,
-      quantidade: Number(quantidade),
-      preco: Number(produto.Valor_unitario),
-      total: Number(quantidade) * Number(produto.Valor_unitario),
-    };
-
-    setItens([...itens, novoItem]);
-    setProdutoSelecionado("");
-    setQuantidade(1);
-    setPrecoUnitario("");
   };
-  const removerItem = (index) => {
+
+  const baixarPDF = async () => {
+    await gerarPDF();
+
+    limparOrcamento();
+  };
+
+  const excluirItem = (index) => {
     const novaLista = itens.filter((_, i) => i !== index);
     setItens(novaLista);
   };
-  const subtotal = itens.reduce((acc, item) => acc + item.total, 0);
 
-  const totalGeral = subtotal + Number(frete);
+  const editarItem = (index) => {
+    const item = itens[index];
 
+    setProdutoSelecionado(item.id);
+    setQuantidade(item.quantidade);
+    setPrecoUnitario(item.preco);
+
+    excluirItem(index);
+
+    setOpenModalItem(true);
+  };
   // ===============================
-  // BUSCAR EMPRESA PARA O PDF
+  // EMPRESA
   // ===============================
 
   const buscarEmpresa = async () => {
     try {
       const res = await fetch("http://localhost:5000/empresa");
 
-      if (!res.ok) {
-        throw new Error("Empresa não encontrada");
-      }
+      if (!res.ok) throw new Error("Empresa não encontrada");
 
       const data = await res.json();
 
-      // se vier array pega a primeira empresa
       return Array.isArray(data) ? data[0] : data;
     } catch (erro) {
       console.log("Erro ao buscar empresa:", erro);
+
       return null;
     }
+  };
+
+  const formatarMoeda = (valor) => {
+    return Number(valor).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+  };
+
+  //===============================
+  // Loog da imagem
+  // ===============================
+
+  const carregarLogoBase64 = async (caminho) => {
+    const url = `http://localhost:5000/${caminho.replace(/\\/g, "/")}`;
+
+    const response = await fetch(url);
+    const blob = await response.blob();
+
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.readAsDataURL(blob);
+    });
   };
 
   // ===============================
   // GERAR PDF
   // ===============================
-
   const gerarPDF = async () => {
     try {
       const empresa = await buscarEmpresa();
-      console.log("LOGO:", empresa.logo);
-
-      if (!empresa) {
-        alert("Dados da empresa não encontrados");
-        return;
-      }
 
       const doc = new jsPDF("p", "mm", "a4");
 
-      // =============================
-      // CORES
-      // =============================
+      let logoBase64 = null;
+
+      if (empresa?.logo) {
+        logoBase64 = await carregarLogoBase64(empresa.logo);
+      }
+
+      if (logoBase64) {
+        doc.addImage(logoBase64, "PNG", 14, 32, 16, 16);
+      }
 
       const verde = [34, 94, 60];
       const cinza = [240, 240, 240];
 
-      // =============================
-      // CABEÇALHO
-      // =============================
+      // ============================
+      // HEADER
+      // ============================
 
+      // faixa superior
       doc.setFillColor(...verde);
-      doc.rect(0, 0, 210, 18, "F");
+      doc.rect(0, 0, 210, 25, "F");
 
-      try {
-        if (empresa?.logo && empresa.logo.startsWith("data:image")) {
-          doc.addImage(empresa.logo, "PNG", 10, 22, 25, 25);
-        }
-      } catch (e) {
-        console.log("Erro ao carregar logo:", e);
-      }
+      // LOGO
 
-      // nome empresa
+      // NOME EMPRESA
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(16);
-      doc.setTextColor(...verde);
-      doc.text(empresa?.nome || "Empresa", 40, 28);
-
-      // slogan
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.text(empresa?.slogan || "", 40, 34);
-
-      // dados empresa
-      doc.setFontSize(9);
-      doc.text(`CNPJ: ${empresa?.cnpj || ""}`, 40, 40);
-      doc.text(`Endereço: ${empresa?.endereco || ""}`, 40, 45);
-      doc.text(`Telefone: ${empresa?.telefone || ""}`, 40, 50);
-      doc.text(`Email: ${empresa?.email || ""}`, 40, 55);
-
-      // titulo orçamento
-      doc.setFontSize(22);
-      doc.setFont("helvetica", "bold");
-      doc.text("ORÇAMENTO", 200, 28, { align: "right" });
-
-      // numero orçamento
-      doc.setFillColor(...verde);
-      doc.roundedRect(150, 32, 50, 10, 3, 3, "F");
-
+      doc.setFontSize(15);
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(12);
-      doc.text("Nº 0001", 175, 39, { align: "center" });
+      doc.text(empresa?.nome || "Empresa", 105, 15, { align: "center" });
+      // SLOGAN
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.text(empresa?.slogan || "", 35, 20);
 
-      // data
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(10);
-      doc.text(`Data: ${new Date().toLocaleDateString()}`, 200, 48, {
-        align: "right",
-      });
+      // ============================
+      // DADOS EMPRESA
+      // ============================
 
-      // linha
-      doc.setDrawColor(200);
-      doc.line(10, 65, 200, 65);
+      doc.setTextColor(60);
+      doc.setFontSize(9);
 
-      // =============================
-      // DADOS DO CLIENTE
-      // =============================
+      doc.text(`CNPJ: ${empresa?.cnpj || ""}`, 35, 34);
+      doc.text(`Endereço: ${empresa?.endereco || ""}`, 35, 40);
+      doc.text(`Telefone: ${empresa?.telefone || ""}`, 35, 46);
+      doc.text(`Contato: ${String(contato || "")}`, 15, 97);
+      doc.text(`Email: ${empresa?.email || ""}`, 35, 52);
+      // ============================
+      // BLOCO ORÇAMENTO
+      // ============================
 
       doc.setFillColor(...cinza);
-      doc.roundedRect(10, 70, 190, 30, 3, 3, "F");
+      doc.roundedRect(150, 32, 50, 20, 3, 3, "F");
 
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.text("DADOS DO CLIENTE", 15, 76);
+      doc.setFontSize(12);
+      doc.setTextColor(...verde);
+      doc.text("ORÇAMENTO", 175, 38, { align: "center" });
 
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
+      doc.setFontSize(9);
+      doc.setTextColor(80, 80, 80);
+      doc.text(`Data: ${new Date().toLocaleDateString()}`, 175, 45, {
+        align: "center",
+      });
 
-      doc.text(`Cliente: ${cliente}`, 15, 84);
-      doc.text(`CNPJ/CPF: ${cnpj}`, 110, 84);
-      doc.text(`Endereço: ${endereco}`, 15, 91);
-      doc.text(`Contato: ${contato}`, 15, 97);
-
-      // =============================
-      // TABELA
-      // =============================
-
-      let startY = 110;
-
+      let startY = 112;
       const col = {
         item: 15,
         desc: 35,
@@ -279,17 +318,47 @@ export default function Orcamento() {
         total: 180,
       };
 
+      doc.setDrawColor(220);
+      doc.line(10, 55, 200, 55);
+
+      doc.setFillColor(...cinza);
+      doc.roundedRect(10, 60, 190, 38, 3, 3, "F");
+
+      // TÍTULO
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(...verde);
+      doc.text("DADOS DO CLIENTE", 15, 70);
+
+      // LABELS
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(100, 100, 100);
+
+      doc.text("CLIENTE", 15, 80);
+      doc.text("CNPJ / CPF", 110, 80);
+      doc.text("ENDEREÇO", 15, 90);
+      doc.text("CONTATO", 110, 90);
+
+      // VALORES
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+
+      doc.text(String(cliente || "-"), 15, 85);
+      doc.text(String(cnpj || "-"), 110, 85);
+      doc.text(String(endereco || "-"), 15, 95);
+      doc.text(String(contato || "-"), 110, 95);
       doc.setFillColor(...verde);
       doc.rect(10, startY - 6, 190, 8, "F");
 
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
-
       doc.text("ITEM", col.item, startY);
       doc.text("PRODUTO", col.desc, startY);
       doc.text("QTD", col.qtd, startY);
-      doc.text("PREÇO ", col.preco, startY);
+      doc.text("PREÇO", col.preco, startY);
       doc.text("TOTAL", col.total, startY);
 
       doc.setTextColor(0, 0, 0);
@@ -299,10 +368,10 @@ export default function Orcamento() {
 
       itens.forEach((item, index) => {
         doc.text(`${index + 1}`, col.item, startY);
-        doc.text(item.nome, col.desc, startY);
+        doc.text(String(item.nome || ""), col.desc, startY);
         doc.text(`${item.quantidade}`, col.qtd, startY);
-        doc.text(`R$ ${item.preco.toFixed(2)}`, col.preco, startY);
-        doc.text(`R$ ${item.total.toFixed(2)}`, col.total, startY);
+        doc.text(formatarMoeda(item.preco), col.preco, startY);
+        doc.text(formatarMoeda(item.total), col.total, startY);
 
         startY += 7;
 
@@ -312,60 +381,50 @@ export default function Orcamento() {
         }
       });
 
-      // =============================
-      // TOTAIS
-      // =============================
-
       startY += 10;
-
-      doc.setFillColor(240, 240, 240);
-      doc.roundedRect(120, startY, 80, 25, 3, 3, "F");
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
+      doc.text(`Subtotal: ${formatarMoeda(subtotal)}`, 125, startY + 8);
+      doc.text(`Frete: ${formatarMoeda(frete)}`, 125, startY + 15);
 
-      doc.text(`Subtotal: R$ ${subtotal.toFixed(2)}`, 125, startY + 8);
-      doc.text(`Frete: R$ ${frete.toFixed(2)}`, 125, startY + 15);
-
-      // total geral destaque
       doc.setFillColor(...verde);
       doc.roundedRect(120, startY + 20, 80, 10, 3, 3, "F");
 
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(12);
-
-      doc.text(`TOTAL: R$ ${totalGeral.toFixed(2)}`, 160, startY + 27, {
+      doc.text(`TOTAL: ${formatarMoeda(totalGeral)}`, 160, startY + 27, {
         align: "center",
       });
 
-      // =============================
-      // RODAPÉ
-      // =============================
-
-      doc.setTextColor(80);
+      doc.setTextColor(80, 80, 80);
       doc.setFontSize(10);
-
       doc.text("Obrigado pela preferência!", 10, 285);
 
-      doc.text("Prazo de entrega: 5 a 7 dias úteis", 10, 290);
-
-      doc.text(empresa?.site || "", 200, 290, { align: "right" });
-
-      // =============================
-      // SALVAR
-      // =============================
-
-      doc.save(`Orcamento_${cliente}.pdf`);
+      // Salvar PDF
+      doc.save(
+        `Orcamento_${(cliente || "cliente").replace(/[^\w]/g, "_")}.pdf`,
+      );
     } catch (erro) {
       console.log("Erro ao gerar PDF:", erro);
       alert("Erro ao gerar PDF");
     }
   };
 
+  const buscarProdutos = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/produtos");
+      const produtos = await res.json();
+
+      setProdutos(produtos);
+    } catch (error) {
+      console.log("Erro ao carregar produtos:", error);
+    }
+  };
+
   return (
-    <div className="w-full min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-6">
-        {/* HEADER */}
+    <div className="sm:ml-64 px-6 pt-1 max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto p-2">
         <CardContent>
           <div className="flex items-center justify-between">
             <CardTitle className="text-3xl font-semibold text-gray-800 tracking-tight">
@@ -381,7 +440,6 @@ export default function Orcamento() {
           </div>
         </CardContent>
 
-        {/* CADASTRAR OS  PRODUTO */}
         {openModalProduto && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
             <form
@@ -465,17 +523,15 @@ export default function Orcamento() {
           </div>
         )}
 
-        {/* FORM CLIENTE */}
-        <CardContent className="flex">
-          <form className="w-full bg-white rounded-xl shadow-md p-6">
+        <CardContent className="flex gap-6 w-full">
+          <form className="flex-1 bg-white rounded-2xl shadow-md p-6">
             <div className="flex items-center gap-2">
               <Receipt className="w-8 h-8 text-green-600" />
               <CardTitle className="text-xl font-semibold text-gray-800">
                 Dados do Cliente
               </CardTitle>
             </div>
-
-            <div className="w-full p-2 space-y-2">
+            <div className="w-full p-2 space-y-0.5">
               <div className="flex items-center gap-4">
                 <label className="w-32 text-sm font-medium text-gray-700">
                   Cliente:
@@ -524,7 +580,6 @@ export default function Orcamento() {
                 />
               </div>
             </div>
-
             <div className="flex justify-start pt-6">
               <button
                 type="button"
@@ -538,7 +593,7 @@ export default function Orcamento() {
           </form>
         </CardContent>
 
-        {/* MODAL PRODUTO */}
+        {/*                                              MODAL PRODUTO */}
         {openModalItem && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
             <form
@@ -606,10 +661,10 @@ export default function Orcamento() {
                   </label>
 
                   <input
-                    type="text"
+                    type="number"
                     value={precoUnitario}
-                    readOnly
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100"
+                    onChange={(e) => setPrecoUnitario(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
                   />
                 </div>
               </div>
@@ -627,28 +682,12 @@ export default function Orcamento() {
           </div>
         )}
 
-        {/* TABELA + RESUMO */}
         <div className="flex gap-6">
-          {/* ITENS DO ORÇAMENTO */}
           <div className="flex-1 bg-white rounded-2xl shadow-md p-6">
             <div className="flex justify-between items-center mb-4">
               <CardTitle className="text-xl font-semibold text-slate-800">
                 Itens do Orçamento
               </CardTitle>
-
-              <div className="relative w-64">
-                <Search
-                  className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400"
-                  size={16}
-                />
-
-                <input
-                  type="text"
-                  placeholder="Buscar..."
-                  value={""}
-                  className="h-8 w-full pl-8 pr-3 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-green-400 focus:outline-none"
-                />
-              </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -692,13 +731,14 @@ export default function Orcamento() {
                           <div className="flex gap-3">
                             <Pencil
                               size={16}
-                              className="cursor-pointer text-blue-700"
+                              className="cursor-pointer"
+                              onClick={() => editarItem(index)}
                             />
 
                             <Trash
                               size={16}
-                              className="cursor-pointer text-red-700"
-                              onClick={() => removerItem(index)}
+                              className="cursor-pointer"
+                              onClick={() => excluirItem(index)}
                             />
                           </div>
                         </td>
@@ -718,24 +758,27 @@ export default function Orcamento() {
 
             <div className="bg-green-100 text-green-800 p-3 rounded-lg flex justify-between">
               <span>Subtotal</span>
-              <span>R$ {subtotal.toFixed(2)}</span>
+              <span>{formatarMoeda(subtotal)}</span>{" "}
             </div>
 
             <div className="bg-yellow-100 text-yellow-800 p-3 rounded-lg flex justify-between items-center">
               <span>Frete</span>
 
               <input
-                type="number"
-                value={frete}
-                onChange={(e) => setFrete(Number(e.target.value))}
-                className="w-24 text-right bg-white border border-yellow-300 rounded px-2 py-1 outline-none"
-                placeholder="0.00"
+                type="text"
+                value={frete === 0 ? "" : formatarMoeda(frete)}
+                onChange={(e) => {
+                  const valor = e.target.value.replace(/\D/g, "");
+                  setFrete(Number(valor) / 100);
+                }}
+                className="w-28 text-right bg-white border border-yellow-300 rounded px-2 py-1 outline-none"
+                placeholder="R$ 0,00"
               />
             </div>
 
             <div className="bg-blue-100 text-blue-800 p-3 rounded-lg flex justify-between font-semibold">
               <span>Total Geral</span>
-              <span>R$ {totalGeral.toFixed(2)}</span>
+              <span>R$ {formatarMoeda(totalGeral)}</span>
             </div>
           </div>
         </div>
@@ -746,7 +789,11 @@ export default function Orcamento() {
             Cancelar
           </button>
           <button
-            onClick={salvarOrcamento}
+            onClick={async () => {
+              await salvarOrcamento();
+              await gerarPDF();
+              limparOrcamento();
+            }}
             className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-1 rounded-lg"
           >
             <CirclePlus className="w-5 h-5" />
@@ -768,6 +815,3 @@ export default function Orcamento() {
     </div>
   );
 }
-
-/// falta fazer aqui : a logo não ta subindo
-/// resolver sobre a questão de salvar orçamento outtra logica essa não ta boa

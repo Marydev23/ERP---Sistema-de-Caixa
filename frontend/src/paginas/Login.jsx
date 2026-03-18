@@ -29,13 +29,10 @@ const Login = () => {
         return;
       }
 
-      // --- LOGIN OK ---
       alert("Login realizado! Bem-vindo " + data.usuario.Nome);
 
-      // SALVA O USUÁRIO (opcional, mas recomendado)
       localStorage.setItem("usuario", JSON.stringify(data.usuario));
 
-      // 🔥 REDIRECIONA PARA O DASHBOARD
       navigate("/dashboard");
     } catch (error) {
       console.error("Erro:", error);
