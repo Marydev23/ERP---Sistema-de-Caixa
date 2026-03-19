@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 
 export default function Empresa() {
-  // Estados para todos os campos
   const [nome, setNome] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [endereco, setEndereco] = useState("");

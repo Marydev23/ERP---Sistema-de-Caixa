@@ -11,10 +11,6 @@ import {
 } from "lucide-react";
 
 export default function Orcamento() {
-  // ===============================
-  // STATES
-  // ===============================
-
   const [cliente, setCliente] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [endereco, setEndereco] = useState("");
@@ -258,22 +254,14 @@ export default function Orcamento() {
       const verde = [34, 94, 60];
       const cinza = [240, 240, 240];
 
-      // ============================
-      // HEADER
-      // ============================
-
-      // faixa superior
       doc.setFillColor(...verde);
       doc.rect(0, 0, 210, 25, "F");
-
-      // LOGO
 
       // NOME EMPRESA
       doc.setFont("helvetica", "bold");
       doc.setFontSize(15);
       doc.setTextColor(255, 255, 255);
       doc.text(empresa?.nome || "Empresa", 105, 15, { align: "center" });
-      // SLOGAN
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
       doc.text(empresa?.slogan || "", 35, 20);

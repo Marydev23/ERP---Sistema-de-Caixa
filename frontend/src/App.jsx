@@ -69,7 +69,6 @@ function App() {
         {/* Configuração */}
         <Route path="/configuracao" element={<Configuracao />} />
 
-        {/* 404 */}
         <Route path="*" element={<Login />} />
       </Routes>
     </Router>

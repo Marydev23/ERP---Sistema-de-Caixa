@@ -640,9 +640,6 @@ def salvar_empresa():
 
 
 
-# ===============================
-# EMPRESA EDITAR
-# ===============================
 
 @app.route("/empresa", methods=["GET"])
 def get_empresa():
@@ -652,16 +649,10 @@ def get_empresa():
         return jsonify(dict(empresa))
     return jsonify({"erro": "Empresa não encontrada"}), 404
 
-# ===============================
-# EMPRESA
-# ===============================
 
 
 
 
-# ===============================
-# EMPRESA APAGAR
-# ===============================
 
 @app.route("/empresa/<int:id>", methods=["PUT"])
 def editar_empresa(id):

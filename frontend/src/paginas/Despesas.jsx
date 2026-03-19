@@ -170,7 +170,6 @@ export default function Despesas() {
   const despesasFiltradas = useMemo(() => {
     const filtradas = listaDespesas.filter(
       (d) =>
-        // aqui verificamos se a busca bate com Descricao ou Categoria
         d.Descricao?.toLowerCase().includes(busca.toLowerCase()) ||
         d.CategoriaID?.toLowerCase().includes(busca.toLowerCase()) ||
         d.Nome?.toLowerCase().includes(busca.toLowerCase()),
