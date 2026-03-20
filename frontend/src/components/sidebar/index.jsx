@@ -35,7 +35,7 @@ export function Sidebar() {
             className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-800"
           >
             <Home className="w-5 h-5" />
-            Dashboard
+            Inicio
           </Link>
 
           <Link
@@ -120,7 +120,7 @@ export function Sidebar() {
                   className="flex items-center gap-4 px-2.5 hover:text-foreground"
                 >
                   <Home className="h-5 w-5" />
-                  Dashboard
+                  Inicio
                 </Link>
 
                 <Link

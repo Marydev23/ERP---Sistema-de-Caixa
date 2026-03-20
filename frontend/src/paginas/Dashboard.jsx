@@ -64,7 +64,7 @@ function Dashboard() {
     }
 
     carregarDados();
-  });
+  }, [periodo]);
 
   const usuario = JSON.parse(localStorage.getItem("usuario"));
 
@@ -104,7 +104,7 @@ function Dashboard() {
 
           <select
             value={periodo}
-            onChange={(e) => setPeriodo(e.target.value)}
+            onChange={(e) => setPeriodo(Number(e.target.value))}
             className="border rounded-lg px-3 py-2 text-sm bg-white shadow-sm"
           >
             <option value="30">30 dias</option>

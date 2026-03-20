@@ -8,12 +8,12 @@ bancoDados = "meu_banco.db"
 conn = sqlite3.connect(bancoDados)
 cur = conn.cursor()
 
-# Habilitar FK
+# Habilitar 
 cur.execute("PRAGMA foreign_keys = ON;")
 
 # ========================
 # TABELA USUARIOS
-# ========================
+# ===============a=========
 cur.execute("""
 CREATE TABLE IF NOT EXISTS usuarios (
     ID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -29,11 +29,12 @@ CREATE TABLE IF NOT EXISTS usuarios (
 # ========================
 
 
+senha_hash = generate_password_hash("admin123")
+
 cur.execute("""
 INSERT OR IGNORE INTO usuarios (Nome, Email, Senha)
 VALUES (?, ?, ?)
-""", ("Leia", "supervasos@gmail.com", "admin123"))
-
+""", ("Leia", "supervasos@gmail.com", senha_hash))
 # ========================
 # TABELA CATEGORIA
 # ========================
