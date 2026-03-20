@@ -48,6 +48,12 @@ Este projeto foi desenvolvido com foco em aprendizado prático de desenvolviment
 
 ---
 
+![Dashboard](https://raw.githubusercontent.com/Marydev23/ERP---Sistema-de-Caixa/eed38d3c7430644a597d31f9727072808faee788/imagem/Inicio.png)
+
+![Despesas](https://raw.githubusercontent.com/Marydev23/ERP---Sistema-de-Caixa/eed38d3c7430644a597d31f9727072808faee788/imagem/Despesa.png)
+
+![Receitas](https://raw.githubusercontent.com/Marydev23/ERP---Sistema-de-Caixa/eed38d3c7430644a597d31f9727072808faee788/imagem/Receita.png)
+
 # ⚙️ Como executar o projeto
 
 
