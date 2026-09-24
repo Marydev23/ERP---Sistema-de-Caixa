@@ -4,7 +4,8 @@ from flask import Flask, request, jsonify, send_from_directory
 import sqlite3
 from flask_cors import CORS
 import os
-from datetime import datetime, timedelta  
+from datetime import datetime, timedelta
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask import send_from_directory
 
 
@@ -50,7 +51,7 @@ def cadastrar_usuarios():
 
     try:
         conn = get_db()
-        conn.execute("INSERT INTO usuarios (Nome, Email, Senha) VALUES (?, ?, ?)", (nome, email, senha))
+        conn.execute("INSERT INTO usuarios (Nome, Email, Senha) VALUES (?, ?, ?)", (nome, email, generate_password_hash(senha)))
         conn.commit()
     except sqlite3.IntegrityError:
         return {"erro": "Email já cadastrado!"}, 400
@@ -72,7 +73,7 @@ def login():
 
     if not usuario:
         return {"erro": "Usuário não encontrado"}, 404
-    if usuario["Senha"] != senha:
+    if not check_password_hash(usuario["Senha"], senha):
         return {"erro": "Senha incorreta"}, 401
 
     return {"mensagem": "Login bem-sucedido!", "usuario": {"ID": usuario["ID"], "Nome": usuario["Nome"], "Email": usuario["Email"]}}
@@ -85,7 +86,7 @@ def atualizar_senha(id):
         return {"erro": "A nova senha é obrigatória"}, 400
 
     conn = get_db()
-    cur = conn.execute("UPDATE usuarios SET Senha = ? WHERE ID = ?", (nova_senha, id))
+    cur = conn.execute("UPDATE usuarios SET Senha = ? WHERE ID = ?", (generate_password_hash(nova_senha), id))
     conn.commit()
 
     if cur.rowcount == 0:
@@ -862,20 +863,6 @@ def deletar_item(id):
     conn.commit()
 
     return {"mensagem": "Item removido"}
-
-
-
-# ===============================
-# API PARA GERAR ORÇAMENTO EM PDF AQUI
-# ===============================
-
-@app.route("/empresa", methods=["GET"])
-def dados_empresa():
-    conn = get_db()
-    empresa = conn.execute("SELECT * FROM empresa LIMIT 1").fetchone()  # assumindo só 1 empresa
-    if empresa:
-        return jsonify(dict(empresa))
-    return jsonify({"erro": "Empresa não encontrada"}), 404
 
 
 
