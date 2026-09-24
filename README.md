@@ -47,8 +47,7 @@ Pensado para quem controla o fluxo de caixa no dia a dia e precisa saber, de for
 ERP---Sistema-de-Caixa/
 ├── Backend/
 │   ├── app.py              # API REST (Flask)
-│   ├── meuBd.py            # Script de criação das tabelas
-│   ├── meu_banco.db        # Banco SQLite
+│   ├── meuBd.py            # Script que cria o banco SQLite e as tabelas
 │   └── app/requirements.txt
 ├── frontend/
 │   └── src/
@@ -96,10 +95,11 @@ cd Backend
 python -m venv venv
 source venv/bin/activate        # no Windows: venv\Scripts\activate
 pip install -r app/requirements.txt
+python meuBd.py                 # cria o banco SQLite (meu_banco.db) com as tabelas
 python app.py
 ```
 
-A API sobe em `http://localhost:5000`. O repositório já inclui um banco SQLite (`Backend/meu_banco.db`).
+A API sobe em `http://localhost:5000`. O `meuBd.py` só precisa ser executado uma vez, dentro da pasta `Backend`.
 
 ### 3. Rodar o frontend
 
@@ -115,7 +115,7 @@ Acesse o endereço mostrado no terminal (normalmente `http://localhost:5173`).
 
 ### 4. Fazer login
 
-Use um usuário já cadastrado no banco ou crie um novo enviando uma requisição `POST` para `http://localhost:5000/usuarios` (por exemplo, pelo Postman):
+O banco começa vazio, então crie um usuário enviando uma requisição `POST` para `http://localhost:5000/usuarios` (por exemplo, pelo Postman):
 
 ```json
 {
@@ -124,6 +124,8 @@ Use um usuário já cadastrado no banco ou crie um novo enviando uma requisiçã
   "Senha": "sua-senha"
 }
 ```
+
+Depois é só entrar na tela de login do frontend com esse e-mail e senha.
 
 ---
 
