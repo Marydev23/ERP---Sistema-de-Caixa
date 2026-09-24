@@ -13,7 +13,7 @@ cur.execute("PRAGMA foreign_keys = ON;")
 
 # ========================
 # TABELA USUARIOS
-# ===============a=========
+# ========================
 cur.execute("""
 CREATE TABLE IF NOT EXISTS usuarios (
     ID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,7 +34,7 @@ senha_hash = generate_password_hash("admin123")
 cur.execute("""
 INSERT OR IGNORE INTO usuarios (Nome, Email, Senha)
 VALUES (?, ?, ?)
-""", ("Leia", "supervasos@gmail.com", senha_hash))
+""", ("Administrador", "admin@erp.com", senha_hash))
 # ========================
 # TABELA CATEGORIA
 # ========================
@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS despesas (
 # TABELA EMPRESA
 # ========================
 cur.execute("""
-CREATE TABLE empresa (
+CREATE TABLE IF NOT EXISTS empresa (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nome TEXT,
   cnpj TEXT,
@@ -151,13 +151,9 @@ CREATE TABLE IF NOT EXISTS orcamentos (
     Contato TEXT,
     Frete REAL,
     Total REAL,
+    empresa_id INTEGER,
     CriadoEm TEXT DEFAULT (datetime('now','localtime'))
 );
-""")
-
-cur.execute("""
-ALTER TABLE orcamentos
-ADD COLUMN empresa_id INTEGER
 """)
 
 # ========================
